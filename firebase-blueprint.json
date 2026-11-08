@@ -1,0 +1,184 @@
+{
+  "entities": {
+    "User": {
+      "title": "User Profile",
+      "description": "Represents registered customer or administrator profile in Al-Waqza Store",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Auth UID of the user" },
+        "name": { "type": "string", "description": "Full name of the user", "maxLength": 100 },
+        "email": { "type": "string", "description": "Email address of the user", "maxLength": 100 },
+        "role": { "type": "string", "description": "User role: customer or admin", "enum": ["customer", "admin"] },
+        "phone": { "type": "string", "description": "Contact phone or WhatsApp number", "maxLength": 25 },
+        "address": { "type": "string", "description": "Default delivery address", "maxLength": 300 },
+        "createdAt": { "type": "string", "description": "Creation timestamp" }
+      },
+      "required": ["id", "email", "role"]
+    },
+    "Product": {
+      "title": "Product",
+      "description": "An e-commerce item available for purchase in Al-Waqza Store",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique product ID" },
+        "name": { "type": "string", "description": "Product display name in Arabic", "maxLength": 150 },
+        "description": { "type": "string", "description": "Comprehensive item description", "maxLength": 2000 },
+        "price": { "type": "number", "description": "Current selling price" },
+        "originalPrice": { "type": "number", "description": "Original retail price before discount" },
+        "discountPercent": { "type": "number", "description": "Percentage discount if on sale" },
+        "category": { "type": "string", "description": "Category slug or identifier", "maxLength": 60 },
+        "image": { "type": "string", "description": "Primary high-resolution product image URL", "maxLength": 500 },
+        "inStock": { "type": "boolean", "description": "Availability status of the product" },
+        "stockCount": { "type": "number", "description": "Available inventory count" },
+        "featured": { "type": "boolean", "description": "Whether highlighted in featured section" },
+        "isDeal": { "type": "boolean", "description": "Whether included in exclusive hot deals" },
+        "salesCount": { "type": "number", "description": "Number of times ordered" },
+        "createdAt": { "type": "string", "description": "Timestamp of creation" }
+      },
+      "required": ["id", "name", "price", "category", "image"]
+    },
+    "Category": {
+      "title": "Category",
+      "description": "Product catalog category",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Category identifier" },
+        "name": { "type": "string", "description": "Category name in Arabic", "maxLength": 80 },
+        "nameEn": { "type": "string", "description": "Category name in English", "maxLength": 80 },
+        "icon": { "type": "string", "description": "Icon descriptor", "maxLength": 50 },
+        "image": { "type": "string", "description": "Banner or tile image URL", "maxLength": 500 },
+        "order": { "type": "number", "description": "Display order index" },
+        "active": { "type": "boolean", "description": "Whether category is active" }
+      },
+      "required": ["id", "name", "order"]
+    },
+    "Order": {
+      "title": "Order",
+      "description": "A customer purchase order with items and delivery information",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Document ID" },
+        "orderNumber": { "type": "string", "description": "Readable order code like WQZ-10293", "maxLength": 30 },
+        "userId": { "type": "string", "description": "Customer UID or guest identifier", "maxLength": 128 },
+        "customerName": { "type": "string", "description": "Customer receiver name", "maxLength": 100 },
+        "customerPhone": { "type": "string", "description": "Contact phone number", "maxLength": 25 },
+        "governorate": { "type": "string", "description": "Province or Governorate", "maxLength": 60 },
+        "city": { "type": "string", "description": "City or Directorate", "maxLength": 60 },
+        "area": { "type": "string", "description": "District or Neighborhood", "maxLength": 80 },
+        "address": { "type": "string", "description": "Detailed street/building address", "maxLength": 300 },
+        "notes": { "type": "string", "description": "Delivery notes or customer requests", "maxLength": 500 },
+        "subtotal": { "type": "number", "description": "Sum of item prices" },
+        "deliveryFee": { "type": "number", "description": "Delivery charge" },
+        "discount": { "type": "number", "description": "Coupon or promo discount amount" },
+        "total": { "type": "number", "description": "Final total payable" },
+        "paymentMethod": { "type": "string", "description": "Payment method chosen", "maxLength": 50 },
+        "status": {
+          "type": "string",
+          "description": "Order lifecycle stage",
+          "enum": ["جديد", "قيد التأكيد", "مؤكد", "قيد التجهيز", "جاهز للشحن", "خرج للتوصيل", "تم التسليم", "ملغي"]
+        },
+        "createdAt": { "type": "string", "description": "Order creation ISO timestamp" },
+        "updatedAt": { "type": "string", "description": "Last update ISO timestamp" }
+      },
+      "required": ["id", "orderNumber", "userId", "customerName", "customerPhone", "total", "status"]
+    },
+    "ProductRequest": {
+      "title": "External Product Request",
+      "description": "Pick It We Deliver It service request where customer pastes an external store link",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Document ID" },
+        "requestNumber": { "type": "string", "description": "Human friendly request code like REQ-9812", "maxLength": 30 },
+        "userId": { "type": "string", "description": "Requester UID", "maxLength": 128 },
+        "customerName": { "type": "string", "description": "Requester name", "maxLength": 100 },
+        "customerPhone": { "type": "string", "description": "Customer phone / WhatsApp", "maxLength": 25 },
+        "productUrl": { "type": "string", "description": "External website product URL", "maxLength": 1000 },
+        "productName": { "type": "string", "description": "Optional title of requested product", "maxLength": 150 },
+        "quantity": { "type": "number", "description": "Quantity desired" },
+        "specs": { "type": "string", "description": "Color, size, or variant specification", "maxLength": 200 },
+        "notes": { "type": "string", "description": "Special instructions from the customer", "maxLength": 500 },
+        "imageUrl": { "type": "string", "description": "Optional reference image URL", "maxLength": 500 },
+        "status": {
+          "type": "string",
+          "description": "Request stage",
+          "enum": ["جديد", "قيد المراجعة", "تم تحديد السعر", "بانتظار موافقة العميل", "تمت الموافقة", "جارٍ توفير المنتج", "مكتمل", "غير متاح", "ملغي"]
+        },
+        "quotedPrice": { "type": "number", "description": "Price quoted by admin" },
+        "deliveryFee": { "type": "number", "description": "Delivery fee quoted by admin" },
+        "estimatedDays": { "type": "string", "description": "Estimated delivery timeframe", "maxLength": 60 },
+        "adminNotes": { "type": "string", "description": "Admin response or instructions for customer", "maxLength": 500 },
+        "customerAccepted": { "type": "boolean", "description": "Whether customer accepted the quote" },
+        "createdAt": { "type": "string", "description": "Creation timestamp" },
+        "updatedAt": { "type": "string", "description": "Update timestamp" }
+      },
+      "required": ["id", "requestNumber", "userId", "productUrl", "status"]
+    },
+    "Banner": {
+      "title": "Marketing Banner",
+      "description": "Hero promotional banner managed by admin",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Banner ID" },
+        "title": { "type": "string", "description": "Primary banner headline", "maxLength": 120 },
+        "subtitle": { "type": "string", "description": "Supporting tagline or incentive", "maxLength": 200 },
+        "badge": { "type": "string", "description": "Callout badge like خصم 50%", "maxLength": 40 },
+        "imageUrl": { "type": "string", "description": "Banner graphic URL", "maxLength": 500 },
+        "linkType": { "type": "string", "description": "Type of target link", "enum": ["category", "product", "request", "custom"] },
+        "linkValue": { "type": "string", "description": "Destination category slug or product ID", "maxLength": 100 },
+        "active": { "type": "boolean", "description": "Whether banner is visible" },
+        "order": { "type": "number", "description": "Slide sort order" }
+      },
+      "required": ["id", "title", "active", "order"]
+    },
+    "StoreSettings": {
+      "title": "Store Settings",
+      "description": "Global store configuration and contact info",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Singleton doc ID 'default'" },
+        "storeName": { "type": "string", "description": "Store name", "maxLength": 100 },
+        "storeSlogan": { "type": "string", "description": "Store slogan: اخترها… ونحن نوصلها!", "maxLength": 150 },
+        "tagline": { "type": "string", "description": "اختيارك أسهل… ووصولك أسرع", "maxLength": 150 },
+        "phone": { "type": "string", "description": "Store phone line", "maxLength": 30 },
+        "whatsapp": { "type": "string", "description": "Store WhatsApp number", "maxLength": 30 },
+        "email": { "type": "string", "description": "Customer support email", "maxLength": 80 },
+        "currency": { "type": "string", "description": "Currency code SAR or YER", "maxLength": 10 },
+        "standardDeliveryFee": { "type": "number", "description": "Default delivery fee" },
+        "freeDeliveryThreshold": { "type": "number", "description": "Cart value for free delivery" },
+        "aboutUs": { "type": "string", "description": "About store description", "maxLength": 1000 },
+        "returnPolicy": { "type": "string", "description": "Return policy text", "maxLength": 1000 }
+      },
+      "required": ["id", "storeName"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "User profiles stored by Auth UID"
+    },
+    "/products/{productId}": {
+      "schema": "Product",
+      "description": "Store catalog products"
+    },
+    "/categories/{categoryId}": {
+      "schema": "Category",
+      "description": "Product categories list"
+    },
+    "/orders/{orderId}": {
+      "schema": "Order",
+      "description": "Customer purchase orders"
+    },
+    "/product_requests/{requestId}": {
+      "schema": "ProductRequest",
+      "description": "External product sourcing requests"
+    },
+    "/banners/{bannerId}": {
+      "schema": "Banner",
+      "description": "Homepage dynamic banners"
+    },
+    "/store_settings/{settingId}": {
+      "schema": "StoreSettings",
+      "description": "Store operational settings and rules"
+    }
+  }
+}

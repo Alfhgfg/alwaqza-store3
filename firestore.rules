@@ -1,0 +1,119 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Default deny all access
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Security helpers
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && (
+        request.auth.token.email == 'abdulrahmanalshaiby2060@gmail.com' ||
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid))
+      );
+    }
+
+    // Admins registry
+    match /admins/{adminId} {
+      allow read, write: if isAdmin();
+    }
+
+    // User profiles
+    match /users/{userId} {
+      allow get: if isValidId(userId) && (isAdmin() || (isSignedIn() && request.auth.uid == userId));
+      allow list: if isAdmin();
+      allow create: if isValidId(userId) && isSignedIn() && request.auth.uid == userId && (
+        !('role' in incoming()) || incoming().role == 'customer' || isAdmin()
+      );
+      allow update: if isValidId(userId) && (
+        isAdmin() ||
+        (isSignedIn() && request.auth.uid == userId && !incoming().diff(existing()).affectedKeys().hasAny(['role']))
+      );
+      allow delete: if isAdmin();
+    }
+
+    // Catalog Products
+    match /products/{productId} {
+      allow read: if isValidId(productId);
+      allow create: if isValidId(productId) && isAdmin();
+      allow update: if isValidId(productId) && isAdmin();
+      allow delete: if isValidId(productId) && isAdmin();
+    }
+
+    // Catalog Categories
+    match /categories/{categoryId} {
+      allow read: if isValidId(categoryId);
+      allow create: if isValidId(categoryId) && isAdmin();
+      allow update: if isValidId(categoryId) && isAdmin();
+      allow delete: if isValidId(categoryId) && isAdmin();
+    }
+
+    // Promotional Banners
+    match /banners/{bannerId} {
+      allow read: if isValidId(bannerId);
+      allow create: if isValidId(bannerId) && isAdmin();
+      allow update: if isValidId(bannerId) && isAdmin();
+      allow delete: if isValidId(bannerId) && isAdmin();
+    }
+
+    // Global Store Settings
+    match /store_settings/{settingId} {
+      allow read: if isValidId(settingId);
+      allow create, update, delete: if isValidId(settingId) && isAdmin();
+    }
+
+    // Orders
+    match /orders/{orderId} {
+      allow get: if isValidId(orderId) && (isAdmin() || (isSignedIn() && resource.data.userId == request.auth.uid) || resource.data.userId == 'guest');
+      allow list: if isAdmin() || (isSignedIn() && resource.data.userId == request.auth.uid);
+      allow create: if isValidId(orderId) && (
+        isAdmin() ||
+        (isSignedIn() && incoming().userId == request.auth.uid) ||
+        (incoming().userId == 'guest')
+      );
+      allow update: if isValidId(orderId) && (
+        isAdmin() ||
+        (isSignedIn() && resource.data.userId == request.auth.uid &&
+          (resource.data.status in ['جديد', 'قيد التأكيد']) &&
+          incoming().diff(existing()).affectedKeys().hasOnly(['status', 'updatedAt']) &&
+          incoming().status == 'ملغي')
+      );
+      allow delete: if isValidId(orderId) && isAdmin();
+    }
+
+    // External Product Sourcing Requests ("اخترها ونحن نوصلها")
+    match /product_requests/{requestId} {
+      allow get: if isValidId(requestId) && (isAdmin() || (isSignedIn() && resource.data.userId == request.auth.uid));
+      allow list: if isAdmin() || (isSignedIn() && resource.data.userId == request.auth.uid);
+      allow create: if isValidId(requestId) && (
+        isAdmin() ||
+        (isSignedIn() && incoming().userId == request.auth.uid) ||
+        (incoming().userId == 'guest')
+      );
+      allow update: if isValidId(requestId) && (
+        isAdmin() ||
+        (isSignedIn() && resource.data.userId == request.auth.uid &&
+          incoming().diff(existing()).affectedKeys().hasOnly(['customerAccepted', 'notes', 'status', 'updatedAt']))
+      );
+      allow delete: if isValidId(requestId) && isAdmin();
+    }
+  }
+}
