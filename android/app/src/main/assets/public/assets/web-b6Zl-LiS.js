@@ -1,0 +1,1 @@
+import{t as e}from"./index-lfYD67Mw.js";var t=class extends e{async show(e){}async hide(e){}};export{t as SplashScreenWeb};

@@ -1,77 +1,71 @@
 import React from 'react';
-import { Home, Grid, Link2, ShoppingBag, User } from 'lucide-react';
+import { Home, Grid, Sparkles, ShoppingBag, User } from 'lucide-react';
 import { useStore } from '../context/StoreContext';
 
-export const BottomNav: React.FC = () => {
-  const { currentView, setCurrentView, cart } = useStore();
-  const totalCartCount = cart.reduce((sum, item) => sum + item.quantity, 0);
+interface BottomNavProps {
+  currentView: string;
+  setCurrentView: (view: string) => void;
+}
+
+export const BottomNav: React.FC<BottomNavProps> = ({ currentView, setCurrentView }) => {
+  const { cartCount } = useStore();
+
+  const navItems = [
+    { id: 'home', label: 'الرئيسية', icon: Home },
+    { id: 'categories', label: 'الأقسام', icon: Grid },
+    { id: 'external-request', label: 'اخترها', icon: Sparkles, isHighlight: true },
+    { id: 'cart', label: 'السلة', icon: ShoppingBag, count: cartCount },
+    { id: 'account', label: 'حسابي', icon: User },
+  ];
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-30 bg-white/95 backdrop-blur-xl border-t border-slate-200/90 py-1.5 px-3 md:hidden shadow-xl shadow-slate-900/15">
-      <div className="flex items-center justify-around max-w-md mx-auto relative">
-        {/* Home */}
-        <button
-          onClick={() => setCurrentView('home')}
-          className={`flex flex-col items-center gap-1 py-1 px-2 rounded-xl transition-all ${
-            currentView === 'home' ? 'text-[#0B1B36] font-black' : 'text-slate-500 hover:text-slate-900'
-          }`}
-        >
-          <Home className={`w-5 h-5 ${currentView === 'home' ? 'stroke-[2.5] text-[#0B1B36]' : ''}`} />
-          <span className="text-[10px]">الرئيسية</span>
-        </button>
+    <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#070F1E]/95 backdrop-blur-md border-t border-amber-500/20 pb-safe shadow-2xl">
+      <div className="flex items-center justify-around h-16 px-2">
+        {navItems.map(item => {
+          const Icon = item.icon;
+          const isActive = currentView === item.id;
 
-        {/* Categories */}
-        <button
-          onClick={() => setCurrentView('categories')}
-          className={`flex flex-col items-center gap-1 py-1 px-2 rounded-xl transition-all ${
-            currentView === 'categories' ? 'text-[#0B1B36] font-black' : 'text-slate-500 hover:text-slate-900'
-          }`}
-        >
-          <Grid className={`w-5 h-5 ${currentView === 'categories' ? 'stroke-[2.5] text-[#0B1B36]' : ''}`} />
-          <span className="text-[10px]">الأقسام</span>
-        </button>
+          if (item.isHighlight) {
+            return (
+              <button
+                key={item.id}
+                onClick={() => setCurrentView(item.id)}
+                className="relative -top-4 flex flex-col items-center group focus:outline-none"
+              >
+                <div className={`w-14 h-14 rounded-full flex items-center justify-center shadow-lg transition-transform ${
+                  isActive
+                    ? 'bg-amber-400 text-slate-950 scale-105 shadow-amber-500/40 ring-4 ring-[#070F1E]'
+                    : 'bg-gradient-to-tr from-amber-600 to-amber-400 text-slate-950 shadow-amber-500/30'
+                }`}>
+                  <Icon className="w-6 h-6 animate-pulse" />
+                </div>
+                <span className={`text-[11px] font-bold mt-1 ${isActive ? 'text-amber-400' : 'text-slate-300'}`}>
+                  {item.label}
+                </span>
+              </button>
+            );
+          }
 
-        {/* Prominent Center Action: "اخترها ونحن نوصلها" with Navy & Gold */}
-        <button
-          onClick={() => setCurrentView('external-request')}
-          className="flex flex-col items-center -top-4 relative group cursor-pointer"
-        >
-          <div className="w-13 h-13 rounded-full bg-gradient-to-tr from-[#070F1E] via-[#0B1B36] to-[#D4A853] text-white flex items-center justify-center shadow-xl shadow-[#0B1B36]/40 border-3 border-white ring-2 ring-[#D4A853]/40 group-active:scale-95 group-hover:scale-105 transition-all">
-            <Link2 className="w-6 h-6 stroke-[2.5] text-[#F5D68B]" />
-          </div>
-          <span className="text-[10px] font-black text-[#0B1B36] mt-0.5">
-            اخترها!
-          </span>
-        </button>
-
-        {/* Cart */}
-        <button
-          onClick={() => setCurrentView('cart')}
-          className={`flex flex-col items-center gap-1 py-1 px-2 rounded-xl relative transition-all ${
-            currentView === 'cart' ? 'text-[#0B1B36] font-black' : 'text-slate-500 hover:text-slate-900'
-          }`}
-        >
-          <div className="relative">
-            <ShoppingBag className={`w-5 h-5 ${currentView === 'cart' ? 'stroke-[2.5] text-[#0B1B36]' : ''}`} />
-            {totalCartCount > 0 && (
-              <span className="absolute -top-1.5 -right-2 bg-[#0B1B36] text-[#F5D68B] text-[10px] font-black w-4 h-4 rounded-full flex items-center justify-center border border-[#D4A853]/50">
-                {totalCartCount}
-              </span>
-            )}
-          </div>
-          <span className="text-[10px]">السلة</span>
-        </button>
-
-        {/* Account */}
-        <button
-          onClick={() => setCurrentView('account')}
-          className={`flex flex-col items-center gap-1 py-1 px-2 rounded-xl transition-all ${
-            currentView === 'account' ? 'text-[#0B1B36] font-black' : 'text-slate-500 hover:text-slate-900'
-          }`}
-        >
-          <User className={`w-5 h-5 ${currentView === 'account' ? 'stroke-[2.5] text-[#0B1B36]' : ''}`} />
-          <span className="text-[10px]">حسابي</span>
-        </button>
+          return (
+            <button
+              key={item.id}
+              onClick={() => setCurrentView(item.id)}
+              className={`flex-1 flex flex-col items-center justify-center py-1 transition-colors relative ${
+                isActive ? 'text-amber-400 font-bold' : 'text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              <div className="relative">
+                <Icon className={`w-5 h-5 ${isActive ? 'stroke-[2.5]' : 'stroke-2'}`} />
+                {item.count !== undefined && item.count > 0 && (
+                  <span className="absolute -top-1.5 -right-2 w-4 h-4 rounded-full bg-amber-500 text-slate-950 text-[10px] font-extrabold flex items-center justify-center">
+                    {item.count}
+                  </span>
+                )}
+              </div>
+              <span className="text-[11px] mt-1">{item.label}</span>
+            </button>
+          );
+        })}
       </div>
     </div>
   );

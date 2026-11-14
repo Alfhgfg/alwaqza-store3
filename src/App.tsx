@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { StoreProvider, useStore } from './context/StoreContext';
+import React, { useState, useEffect, useCallback } from 'react';
+import { StoreProvider } from './context/StoreContext';
 import { Navbar } from './components/Navbar';
 import { BottomNav } from './components/BottomNav';
 import { Footer } from './components/Footer';
@@ -14,92 +14,186 @@ import { MyOrdersPage } from './components/MyOrdersPage';
 import { MyRequestsPage } from './components/MyRequestsPage';
 import { WishlistPage } from './components/WishlistPage';
 import { AccountPage } from './components/AccountPage';
-import { AdminDashboard } from './components/AdminDashboard';
 import { AdminLoginPage } from './components/AdminLoginPage';
+import { AdminDashboard } from './components/AdminDashboard';
+import { AdminSecuritySettings } from './components/AdminSecuritySettings';
 import { ContactPage } from './components/ContactPage';
-import { StaticPages } from './components/StaticPages';
+import { StaticPage } from './components/StaticPages';
 import { ProductDetailsModal } from './components/ProductDetailsModal';
 import { NotificationsModal } from './components/NotificationsModal';
 import { Product } from './types';
-import { WifiOff, AlertTriangle } from 'lucide-react';
+import { initMobileApp } from './services/mobileApp';
 
-const MainAppContent: React.FC = () => {
-  const {
-    currentView,
-    setCurrentView,
-    isOnline,
-    isAdmin,
-    products,
-  } = useStore();
+export const AppContent: React.FC = () => {
+  const [currentView, setCurrentView] = useState<string>('home');
+  const [selectedCategory, setSelectedCategory] = useState<string | undefined>(undefined);
+  const [activeProduct, setActiveProduct] = useState<Product | null>(null);
+  const [isNotifOpen, setIsNotifOpen] = useState(false);
+  const [lastOrderId, setLastOrderId] = useState<string>('');
 
-  const [notificationsOpen, setNotificationsOpen] = useState(false);
-  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
-  const [latestOrderNumber, setLatestOrderNumber] = useState<string>('');
+  // Handle hardware Android back button
+  const handleHardwareBack = useCallback((): boolean => {
+    if (activeProduct) {
+      setActiveProduct(null);
+      return true;
+    }
+    if (isNotifOpen) {
+      setIsNotifOpen(false);
+      return true;
+    }
+    if (currentView !== 'home') {
+      setCurrentView('home');
+      return true;
+    }
+    return false; // let app exit
+  }, [activeProduct, isNotifOpen, currentView]);
 
-  const handleSelectProduct = (product: Product) => {
-    setSelectedProduct(product);
-  };
+  useEffect(() => {
+    initMobileApp(handleHardwareBack);
+  }, [handleHardwareBack]);
 
-  const handleOrderSuccess = (orderNumber: string) => {
-    setLatestOrderNumber(orderNumber);
-    setCurrentView('order-success');
+  const handleNavigate = (view: string, category?: string) => {
+    setCurrentView(view);
+    if (category) {
+      setSelectedCategory(category);
+    }
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   return (
-    <div className="min-h-screen bg-[#F8F9FC] flex flex-col font-sans selection:bg-[#D4A853] selection:text-[#070F1E]">
-      {/* Offline Alert Strip */}
-      {!isOnline && (
-        <div className="bg-gradient-to-r from-amber-600 via-amber-500 to-amber-600 text-white text-xs font-bold py-2 px-4 text-center flex items-center justify-center gap-2 shadow-sm border-b border-amber-400">
-          <WifiOff className="w-4 h-4 text-amber-100" />
-          <span>أنت تتصفح في وضع عدم الاتصال بالإنترنت. يمكنك تصفح المنتجات المحفوظة مؤقتاً.</span>
-        </div>
-      )}
-
-      {/* Top Navigation */}
-      <Navbar onOpenNotifications={() => setNotificationsOpen(true)} />
-
-      {/* Main View Area */}
-      <main className="flex-1 pb-16 md:pb-8">
-        {currentView === 'home' && <HomePage onSelectProduct={handleSelectProduct} />}
-        {currentView === 'categories' && <CategoriesPage onSelectProduct={handleSelectProduct} />}
-        {currentView === 'deals' && <SearchPage onSelectProduct={handleSelectProduct} />}
-        {currentView === 'search' && <SearchPage onSelectProduct={handleSelectProduct} />}
-        {currentView === 'external-request' && <ExternalRequestPage />}
-        {currentView === 'cart' && <CartPage />}
-        {currentView === 'checkout' && <CheckoutPage onOrderSuccess={handleOrderSuccess} />}
-        {currentView === 'order-success' && <OrderSuccessPage orderNumber={latestOrderNumber} />}
-        {currentView === 'orders' && <MyOrdersPage />}
-        {currentView === 'requests' && <MyRequestsPage />}
-        {currentView === 'wishlist' && <WishlistPage onSelectProduct={handleSelectProduct} />}
-        {currentView === 'account' && <AccountPage onOpenNotifications={() => setNotificationsOpen(true)} />}
-        {currentView === 'admin' && (isAdmin ? <AdminDashboard /> : <AdminLoginPage onSuccess={() => setCurrentView('admin')} />)}
-        {currentView === 'admin-login' && <AdminLoginPage onSuccess={() => setCurrentView('admin')} />}
-        {currentView === 'contact' && <ContactPage />}
-        {currentView === 'terms' && <StaticPages type="terms" />}
-        {currentView === 'privacy' && <StaticPages type="privacy" />}
-        {currentView === 'returns' && <StaticPages type="returns" />}
-      </main>
-
-      {/* Modals */}
-      {selectedProduct && (
-        <ProductDetailsModal
-          product={selectedProduct}
-          onClose={() => setSelectedProduct(null)}
-          onSelectProduct={handleSelectProduct}
-        />
-      )}
-
-      <NotificationsModal
-        isOpen={notificationsOpen}
-        onClose={() => setNotificationsOpen(false)}
+    <div className="min-h-screen bg-slate-50 flex flex-col selection:bg-amber-500 selection:text-white">
+      {/* Top Header / App Bar */}
+      <Navbar
+        currentView={currentView}
+        setCurrentView={handleNavigate}
+        openNotifications={() => setIsNotifOpen(true)}
       />
 
-      {/* Mobile Floating Bottom Bar */}
-      <BottomNav />
+      {/* Main Content Area */}
+      <main className="flex-1 pb-20 md:pb-8">
+        {currentView === 'home' && (
+          <HomePage
+            onNavigate={handleNavigate}
+            onOpenProduct={setActiveProduct}
+          />
+        )}
+
+        {currentView === 'categories' && (
+          <CategoriesPage
+            initialCategory={selectedCategory}
+            onOpenProduct={setActiveProduct}
+          />
+        )}
+
+        {currentView === 'search' && (
+          <SearchPage onOpenProduct={setActiveProduct} />
+        )}
+
+        {currentView === 'external-request' && (
+          <ExternalRequestPage
+            onSuccessNavigate={() => handleNavigate('my-requests')}
+          />
+        )}
+
+        {currentView === 'cart' && (
+          <CartPage
+            onProceedToCheckout={() => handleNavigate('checkout')}
+            onExplore={() => handleNavigate('categories')}
+          />
+        )}
+
+        {currentView === 'checkout' && (
+          <CheckoutPage
+            onSuccess={(id) => {
+              setLastOrderId(id);
+              handleNavigate('order-success');
+            }}
+            onBack={() => handleNavigate('cart')}
+          />
+        )}
+
+        {currentView === 'order-success' && (
+          <OrderSuccessPage
+            orderId={lastOrderId}
+            onNavigateHome={() => handleNavigate('home')}
+            onViewOrders={() => handleNavigate('orders')}
+          />
+        )}
+
+        {currentView === 'orders' && (
+          <MyOrdersPage onBack={() => handleNavigate('home')} />
+        )}
+
+        {currentView === 'my-requests' && (
+          <MyRequestsPage
+            onBack={() => handleNavigate('account')}
+            onNewRequest={() => handleNavigate('external-request')}
+          />
+        )}
+
+        {currentView === 'wishlist' && (
+          <WishlistPage
+            onBack={() => handleNavigate('home')}
+            onOpenProduct={setActiveProduct}
+          />
+        )}
+
+        {currentView === 'account' && (
+          <AccountPage onNavigate={handleNavigate} />
+        )}
+
+        {currentView === 'admin-login' && (
+          <AdminLoginPage
+            onSuccess={() => handleNavigate('admin-dashboard')}
+            onBack={() => handleNavigate('home')}
+          />
+        )}
+
+        {currentView === 'admin-dashboard' && (
+          <AdminDashboard
+            onLogout={() => handleNavigate('home')}
+            onOpenSecurity={() => handleNavigate('admin-security')}
+          />
+        )}
+
+        {currentView === 'admin-security' && (
+          <AdminSecuritySettings
+            onBack={() => handleNavigate('admin-dashboard')}
+          />
+        )}
+
+        {currentView === 'contact' && (
+          <ContactPage />
+        )}
+
+        {(currentView === 'terms' || currentView === 'privacy' || currentView === 'shipping' || currentView === 'returns' || currentView === 'about') && (
+          <StaticPage
+            type={currentView as any}
+            onBack={() => handleNavigate('home')}
+          />
+        )}
+      </main>
 
       {/* Footer */}
-      <Footer />
+      <Footer onNavigate={handleNavigate} />
+
+      {/* Android Mobile Navigation Bar */}
+      <BottomNav
+        currentView={currentView}
+        setCurrentView={handleNavigate}
+      />
+
+      {/* Global Product Details Modal */}
+      <ProductDetailsModal
+        product={activeProduct}
+        onClose={() => setActiveProduct(null)}
+      />
+
+      {/* Notifications Modal */}
+      <NotificationsModal
+        isOpen={isNotifOpen}
+        onClose={() => setIsNotifOpen(false)}
+      />
     </div>
   );
 };
@@ -107,7 +201,7 @@ const MainAppContent: React.FC = () => {
 export default function App() {
   return (
     <StoreProvider>
-      <MainAppContent />
+      <AppContent />
     </StoreProvider>
   );
 }

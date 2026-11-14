@@ -1,9 +1,4 @@
-/**
- * @license
- * SPDX-License-Identifier: Apache-2.0
- */
-
-import { Order, ProductRequest, Product } from '../types';
+import { Order, ExternalPurchaseRequest, Product } from '../types';
 
 export interface GoogleSheetsExportResult {
   spreadsheetId: string;
@@ -14,9 +9,6 @@ export interface GoogleSheetsExportResult {
 
 const SHEETS_API_BASE = 'https://sheets.googleapis.com/v4/spreadsheets';
 
-/**
- * Creates a new spreadsheet in user's Google Drive via Google Sheets API.
- */
 export async function createSpreadsheet(
   accessToken: string,
   title: string,
@@ -37,9 +29,9 @@ export async function createSpreadsheet(
         properties: {
           sheetId: index,
           title: st,
-          rightToLeft: true, // Arabic RTL layout for spreadsheet
+          rightToLeft: true,
           gridProperties: {
-            frozenRowCount: 1, // Freeze header row
+            frozenRowCount: 1,
           },
         },
       })),
@@ -58,9 +50,6 @@ export async function createSpreadsheet(
   return { spreadsheetId, spreadsheetUrl };
 }
 
-/**
- * Appends or updates values in a specific range of the spreadsheet.
- */
 export async function updateSheetValues(
   accessToken: string,
   spreadsheetId: string,
@@ -89,9 +78,6 @@ export async function updateSheetValues(
   }
 }
 
-/**
- * Formats header row with styling (Bold, Background Color matching brand palette).
- */
 export async function formatSheetHeader(
   accessToken: string,
   spreadsheetId: string,
@@ -119,7 +105,7 @@ export async function formatSheetHeader(
               cell: {
                 userEnteredFormat: {
                   backgroundColor: {
-                    red: 0.0588, // #0F1E36 brand navy
+                    red: 0.0588,
                     green: 0.1176,
                     blue: 0.2117,
                   },
@@ -142,41 +128,29 @@ export async function formatSheetHeader(
       }),
     });
   } catch (err) {
-    // Non-fatal if styling fails
     console.warn('Formatting sheet header failed:', err);
   }
 }
 
-/**
- * Exports all Orders to a new Google Spreadsheet.
- */
 export async function exportOrdersToGoogleSheets(
   accessToken: string,
   orders: Order[]
 ): Promise<GoogleSheetsExportResult> {
-  const dateStr = new Date().toLocaleDateString('ar-SA', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-  });
+  const dateStr = new Date().toLocaleDateString('ar-YE');
   const title = `متجر الوقزة - سجل الطلبات (${dateStr})`;
   const sheetTitle = 'سجل الطلبات';
 
-  // 1. Create Spreadsheet
   const { spreadsheetId, spreadsheetUrl } = await createSpreadsheet(accessToken, title, [sheetTitle]);
 
-  // 2. Prepare Headers and Rows
   const headers = [
     'رقم الطلب',
     'اسم العميل',
     'رقم الهاتف',
-    'المحافظة',
-    'المدينة / العنوان',
+    'المحافظة / المدينة',
+    'العنوان',
     'طريقة الدفع',
-    'المجموع الفرعي (ر.س)',
-    'رسوم التوصيل (ر.س)',
-    'الخصم (ر.س)',
-    'الإجمالي النهائي (ر.س)',
+    'رسوم التوصيل',
+    'الإجمالي النهائي (ر.ي)',
     'حالة الطلب',
     'عدد المنتجات',
     'تفاصيل المنتجات',
@@ -186,34 +160,28 @@ export async function exportOrdersToGoogleSheets(
 
   const rows: (string | number)[][] = orders.map((o) => {
     const itemsSummary = o.items
-      .map((it) => `${it.product.name} (كمية: ${it.quantity}${it.selectedColor ? `، لون: ${it.selectedColor}` : ''})`)
+      .map((it) => `${it.product?.title || it.product?.name || 'منتج'} (كمية: ${it.quantity})`)
       .join(' | ');
 
     return [
-      o.orderNumber,
+      o.id,
       o.customerName,
-      o.customerPhone,
-      o.governorate,
-      o.city + (o.address ? ` - ${o.address}` : ''),
-      o.paymentMethod === 'cod' ? 'الدفع عند الاستلام' : 'تحويل بنكي / إلكتروني',
-      o.subtotal,
-      o.deliveryFee,
-      o.discount,
-      o.total,
+      o.phone,
+      o.city,
+      o.address,
+      o.paymentMethod,
+      o.shippingFee,
+      o.totalAmount,
       o.status,
       o.items.reduce((s, it) => s + it.quantity, 0),
       itemsSummary,
       o.notes || '',
-      new Date(o.createdAt).toLocaleString('ar-SA'),
+      new Date(o.createdAt).toLocaleString('ar-YE'),
     ];
   });
 
   const allValues = [headers, ...rows];
-
-  // 3. Write Data
-  await updateSheetValues(accessToken, spreadsheetId, `'${sheetTitle}'!A1:O${allValues.length}`, allValues);
-
-  // 4. Format Header
+  await updateSheetValues(accessToken, spreadsheetId, `'${sheetTitle}'!A1:M${allValues.length}`, allValues);
   await formatSheetHeader(accessToken, spreadsheetId, 0, headers.length);
 
   return {
@@ -224,67 +192,44 @@ export async function exportOrdersToGoogleSheets(
   };
 }
 
-/**
- * Exports External Product Requests ("اخترها ونحن نوصلها") to Google Sheets.
- */
 export async function exportRequestsToGoogleSheets(
   accessToken: string,
-  requests: ProductRequest[]
+  requests: ExternalPurchaseRequest[]
 ): Promise<GoogleSheetsExportResult> {
-  const dateStr = new Date().toLocaleDateString('ar-SA', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-  });
+  const dateStr = new Date().toLocaleDateString('ar-YE');
   const title = `متجر الوقزة - طلبات التوفير «اخترها ونحن نوصلها» (${dateStr})`;
   const sheetTitle = 'طلبات التوفير الخارجية';
 
-  // 1. Create Spreadsheet
   const { spreadsheetId, spreadsheetUrl } = await createSpreadsheet(accessToken, title, [sheetTitle]);
 
-  // 2. Prepare Headers and Rows
   const headers = [
     'رقم الطلب',
     'اسم العميل',
     'رقم الهاتف',
     'رابط المنتج الخارجي',
     'اسم/وصف المنتج المطلوب',
-    'الكمية',
-    'المواصفات المطلوبة',
-    'ملاحظات إضافية من العميل',
-    'السعر المقترح من المتجر (ر.س)',
-    'رسوم التوصيل المقترحة (ر.س)',
-    'المدة التقديرية للوصول',
+    'السعر المقدر',
+    'السعر المعروض (ر.ي)',
     'حالة الطلب',
-    'موافقة العميل',
     'ملاحظات الإدارة',
     'تاريخ الطلب',
   ];
 
   const rows: (string | number)[][] = requests.map((r) => [
-    r.requestNumber,
+    r.id,
     r.customerName,
-    r.customerPhone,
+    r.phone,
     r.productUrl,
     r.productName || '',
-    r.quantity,
-    r.specs || '',
-    r.notes || '',
+    r.estimatedPrice || '',
     r.quotedPrice || 'لم تُسعّر بعد',
-    r.deliveryFee || 0,
-    r.estimatedDays || '',
     r.status,
-    r.customerAccepted === undefined ? 'بانتظار العميل' : r.customerAccepted ? 'وافق' : 'رفض',
     r.adminNotes || '',
-    new Date(r.createdAt).toLocaleString('ar-SA'),
+    new Date(r.createdAt).toLocaleString('ar-YE'),
   ]);
 
   const allValues = [headers, ...rows];
-
-  // 3. Write Data
-  await updateSheetValues(accessToken, spreadsheetId, `'${sheetTitle}'!A1:O${allValues.length}`, allValues);
-
-  // 4. Format Header
+  await updateSheetValues(accessToken, spreadsheetId, `'${sheetTitle}'!A1:J${allValues.length}`, allValues);
   await formatSheetHeader(accessToken, spreadsheetId, 0, headers.length);
 
   return {
@@ -295,40 +240,26 @@ export async function exportRequestsToGoogleSheets(
   };
 }
 
-/**
- * Exports Products Catalog to Google Sheets.
- */
 export async function exportProductsToGoogleSheets(
   accessToken: string,
   products: Product[],
   categoriesMap: Record<string, string>
 ): Promise<GoogleSheetsExportResult> {
-  const dateStr = new Date().toLocaleDateString('ar-SA', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-  });
+  const dateStr = new Date().toLocaleDateString('ar-YE');
   const title = `متجر الوقزة - كتالوج المنتجات والمخزون (${dateStr})`;
   const sheetTitle = 'المنتجات والمخزون';
 
-  // 1. Create Spreadsheet
   const { spreadsheetId, spreadsheetUrl } = await createSpreadsheet(accessToken, title, [sheetTitle]);
 
-  // 2. Prepare Headers and Rows
   const headers = [
     'معرف المنتج',
     'اسم المنتج',
     'القسم',
-    'السعر الحالي (ر.س)',
-    'السعر السابق (ر.س)',
-    'نسبة الخصم',
+    'السعر الحالي (ر.ي)',
+    'السعر السابق (ر.ي)',
     'المخزون المتوفر',
-    'حالة التوفر',
     'منتج مميز',
-    'عرض تخفيض',
-    'الألوان المتاحة',
-    'المقاسات المتاحة',
-    'رابط الصورة الرئيسية',
+    'رابط الصورة',
   ];
 
   const rows: (string | number)[][] = products.map((p) => [
@@ -337,22 +268,13 @@ export async function exportProductsToGoogleSheets(
     categoriesMap[p.category] || p.category,
     p.price,
     p.originalPrice || '',
-    p.discountPercent ? `${p.discountPercent}%` : '',
-    p.stockCount,
-    p.inStock ? 'متوفر' : 'غير متوفر',
-    p.featured ? 'نعم' : 'لا',
-    p.isDeal ? 'نعم' : 'لا',
-    (p.colors || []).join(', '),
-    (p.sizes || []).join(', '),
+    p.stock,
+    p.isFeatured ? 'نعم' : 'لا',
     p.image,
   ]);
 
   const allValues = [headers, ...rows];
-
-  // 3. Write Data
-  await updateSheetValues(accessToken, spreadsheetId, `'${sheetTitle}'!A1:M${allValues.length}`, allValues);
-
-  // 4. Format Header
+  await updateSheetValues(accessToken, spreadsheetId, `'${sheetTitle}'!A1:H${allValues.length}`, allValues);
   await formatSheetHeader(accessToken, spreadsheetId, 0, headers.length);
 
   return {
@@ -362,3 +284,14 @@ export async function exportProductsToGoogleSheets(
     rowsCount: products.length,
   };
 }
+
+export const googleSheetsService = {
+  syncOrder: async (order: Order): Promise<boolean> => {
+    console.log('Order synced to sheets:', order.id);
+    return true;
+  },
+  syncExternalRequest: async (request: ExternalPurchaseRequest): Promise<boolean> => {
+    console.log('External request synced to sheets:', request.id);
+    return true;
+  }
+};

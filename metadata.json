@@ -1,6 +1,13 @@
 {
   "name": "متجر الوقزة | AL-WAQZA STORE",
-  "description": "متجر إلكتروني متكامل ومتعدد المنتجات مع خدمة اخترها ونحن نوصلها لطلب المنتجات من الروابط الخارجية ولوحة تحكم شاملة.",
-  "requestFramePermissions": [],
-  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+  "description": "تطبيق ومتجر إلكتروني متكامل - فخامة التسوق بأفضل الأسعار مع خدمة اخترها ونحن نوصلها وتطبيق أندرويد حقيقي",
+  "requestFrame": "auto",
+  "permissions": [
+    "camera",
+    "geolocation",
+    "microphone"
+  ],
+  "capabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
 }

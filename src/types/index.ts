@@ -1,55 +1,30 @@
-export type OrderStatus =
-  | 'جديد'
-  | 'قيد التأكيد'
-  | 'مؤكد'
-  | 'قيد التجهيز'
-  | 'جاهز للشحن'
-  | 'خرج للتوصيل'
-  | 'تم التسليم'
-  | 'ملغي';
-
-export type ProductRequestStatus =
-  | 'جديد'
-  | 'قيد المراجعة'
-  | 'تم تحديد السعر'
-  | 'بانتظار موافقة العميل'
-  | 'تمت الموافقة'
-  | 'جارٍ توفير المنتج'
-  | 'مكتمل'
-  | 'غير متاح'
-  | 'ملغي';
+export type Currency = 'SAR' | 'YER' | 'USD';
 
 export interface Product {
   id: string;
-  name: string;
-  description: string;
+  name?: string;
+  title?: string;
+  titleEn?: string;
   price: number;
   originalPrice?: number;
-  discountPercent?: number;
+  discountPercentage?: number;
+  currency?: Currency;
   category: string;
+  rating: number;
+  ratingCount?: number;
+  reviewsCount?: number;
   image: string;
   images?: string[];
-  inStock: boolean;
-  stockCount: number;
+  description: string;
+  inStock?: boolean;
+  stock?: number;
   featured?: boolean;
-  isDeal?: boolean;
+  isFeatured?: boolean;
+  isBestseller?: boolean;
+  isNew?: boolean;
+  badge?: string;
+  specs?: Record<string, string>;
   colors?: string[];
-  sizes?: string[];
-  rating?: number;
-  reviewCount?: number;
-  salesCount?: number;
-  createdAt?: string;
-}
-
-export interface Category {
-  id: string;
-  name: string;
-  nameEn?: string;
-  icon: string;
-  image?: string;
-  order: number;
-  active: boolean;
-  itemCount?: number;
 }
 
 export interface CartItem {
@@ -59,128 +34,126 @@ export interface CartItem {
   selectedSize?: string;
 }
 
+export type OrderStatus = 'pending' | 'confirmed' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
+
+export interface OrderItem {
+  id: string;
+  name: string;
+  price: number;
+  quantity: number;
+  image: string;
+}
+
 export interface Order {
   id: string;
-  orderNumber: string;
-  userId: string;
-  customerName: string;
-  customerPhone: string;
-  governorate: string;
-  city: string;
-  area: string;
-  address: string;
-  notes?: string;
-  items: CartItem[];
-  subtotal: number;
-  deliveryFee: number;
-  discount: number;
-  total: number;
-  paymentMethod: string;
+  orderNumber?: string;
+  date?: string;
+  createdAt?: string;
   status: OrderStatus;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface ProductRequest {
-  id: string;
-  requestNumber: string;
-  userId: string;
+  items: CartItem[];
+  total?: number;
+  totalAmount?: number;
+  shippingFee?: number;
+  currency?: Currency;
   customerName: string;
-  customerPhone: string;
-  productUrl: string;
-  productName?: string;
-  quantity: number;
-  specs?: string;
+  phone: string;
+  city: string;
+  address: string;
+  paymentMethod: string;
   notes?: string;
-  imageUrl?: string;
-  status: ProductRequestStatus;
-  quotedPrice?: number;
-  deliveryFee?: number;
-  estimatedDays?: string;
-  adminNotes?: string;
-  customerAccepted?: boolean;
-  createdAt: string;
-  updatedAt: string;
 }
 
-export interface Banner {
+export type RequestStatus =
+  | 'received'
+  | 'under_review'
+  | 'reviewing'
+  | 'priced'
+  | 'price_offered'
+  | 'confirmed'
+  | 'approved'
+  | 'rejected'
+  | 'ordered'
+  | 'purchased'
+  | 'shipped'
+  | 'delivered'
+  | 'cancelled';
+
+export interface ExternalPurchaseRequest {
+  id: string;
+  requestNumber?: string;
+  url?: string;
+  productUrl: string;
+  title?: string;
+  productName: string;
+  productNotes?: string;
+  notes?: string;
+  expectedPrice?: number;
+  estimatedPrice?: number;
+  currency?: Currency;
+  quotedPrice?: number;
+  status: RequestStatus;
+  customerName: string;
+  phone: string;
+  city?: string;
+  address?: string;
+  adminNotes?: string;
+  createdAt: string;
+}
+
+export type ExternalRequest = ExternalPurchaseRequest;
+export type ProductRequest = ExternalPurchaseRequest;
+
+export interface NotificationItem {
+  id: string;
+  title: string;
+  message: string;
+  date?: string;
+  time?: string;
+  read: boolean;
+  type: 'order' | 'request' | 'promo' | 'system';
+  link?: string;
+}
+
+export interface BannerSlide {
   id: string;
   title: string;
   subtitle: string;
-  badge?: string;
-  imageUrl: string;
-  linkType: 'category' | 'product' | 'request' | 'custom';
-  linkValue: string;
-  active: boolean;
-  order: number;
-  bgGradient?: string;
+  badge: string;
+  image: string;
+  ctaText: string;
+  categoryLink: string;
 }
 
-export interface StoreSettings {
-  id: string;
-  storeName: string;
-  storeSlogan: string;
-  tagline: string;
-  phone: string;
-  whatsapp: string;
-  email: string;
-  currency: string;
-  standardDeliveryFee: number;
-  freeDeliveryThreshold: number;
-  deliveryCities: string[];
-  activePaymentMethods: string[];
-  aboutUs: string;
-  returnPolicy: string;
-}
-
-export interface UserProfile {
+export interface Category {
   id: string;
   name: string;
-  email: string;
-  role: 'customer' | 'admin';
-  phone?: string;
-  address?: string;
-  createdAt?: string;
+  icon: string;
+  image: string;
+  itemCount: number;
+  slug: string;
 }
 
-export interface AppNotification {
-  id: string;
-  userId?: string;
-  title: string;
-  message: string;
-  type: 'order' | 'request' | 'promo' | 'system';
-  read: boolean;
-  link?: string;
-  createdAt: string;
-}
-
-export interface ProductReview {
-  id: string;
-  productId: string;
-  userId: string;
-  userName: string;
-  rating: number; // 1 to 5
-  comment: string;
-  createdAt: string;
-  verifiedPurchase?: boolean;
-}
-
-export interface Coupon {
-  id: string;
-  code: string;
-  discountPercent: number;
-  minOrderAmount?: number;
-  description: string;
-  active: boolean;
-  expiryDate?: string;
-}
-
-export interface CustomerInquiry {
-  id: string;
-  name: string;
-  phone: string;
-  message: string;
-  status: 'new' | 'answered' | 'closed';
-  createdAt: string;
-}
-
+export type AppView =
+  | 'home'
+  | 'categories'
+  | 'deals'
+  | 'search'
+  | 'external-request'
+  | 'cart'
+  | 'checkout'
+  | 'order-success'
+  | 'orders'
+  | 'my-requests'
+  | 'requests'
+  | 'wishlist'
+  | 'account'
+  | 'admin'
+  | 'admin-login'
+  | 'admin-dashboard'
+  | 'admin-security'
+  | 'contact'
+  | 'terms'
+  | 'privacy'
+  | 'shipping'
+  | 'returns'
+  | 'about';

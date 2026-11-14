@@ -1,11 +1,11 @@
 [
   {
-    "id": "log_1794168878319_2nljj",
-    "timestamp": "2026-11-08T20:14:38.319Z",
-    "action": "FAILED_LOGIN_UNKNOWN_USER",
-    "actor": "test",
-    "details": "محاولة دخول باسم مستخدم غير مصرح به: \"test\" من العنوان 127.0.0.1",
+    "id": "log_1794172252055_pwjph",
+    "timestamp": "2026-11-08T21:10:52.055Z",
+    "action": "SUPER_ADMIN_LOGIN_SUCCESS",
+    "actor": "المدير الرئيسي لمتجر الوقزة",
+    "details": "تم تسجيل دخول المدير الرئيسي بنجاح (المدير الرئيسي لمتجر الوقزة) من العنوان 127.0.0.1",
     "ip": "127.0.0.1",
-    "severity": "security"
+    "severity": "info"
   }
 ]
