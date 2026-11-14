@@ -14,28 +14,38 @@ jobs:
 
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
-      - name: Setup Node.js 20
-        uses: actions/setup-node@v4
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v5
         with:
-          node-version: 20
+          node-version: '22'
           cache: 'npm'
 
       - name: Install Node Dependencies
-        run: npm ci || npm install
+        run: npm ci
 
-      - name: Build Web Application
-        run: npm run build
+      - name: Type Check & Build Web Application
+        run: |
+          npm run lint
+          npm run build
 
       - name: Setup Java 21 (Temurin)
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: 'temurin'
           java-version: '21'
+          cache: 'gradle'
 
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
+      - name: Setup Android SDK (API 35)
+        uses: android-actions/setup-android@v4
+        with:
+          accept-android-sdk-licenses: true
+          log-accepted-android-sdk-licenses: false
+          packages: >-
+            platform-tools
+            platforms;android-35
+            build-tools;35.0.0
 
       - name: Sync Capacitor Android
         run: npx cap sync android
@@ -49,27 +59,34 @@ jobs:
               -dname "CN=Alwaqza Store, OU=Mobile, O=Alwaqza, L=Sanaa, ST=Sanaa, C=YE"
           fi
 
-      - name: Build Signed APK
+      - name: Build Signed APK & Google Play AAB
         run: |
           cd android
           chmod +x gradlew
-          ./gradlew assembleRelease --stacktrace
+          ./gradlew assembleRelease bundleRelease --stacktrace --no-daemon
 
-      - name: Build Google Play AAB
+      - name: Verify Build Outputs
         run: |
-          cd android
-          ./gradlew bundleRelease --stacktrace
+          APK_FILE=$(find android/app/build/outputs/apk/release -name "*.apk" | head -n 1)
+          AAB_FILE=$(find android/app/build/outputs/bundle/release -name "*.aab" | head -n 1)
+          test -n "$APK_FILE" && test -f "$APK_FILE"
+          test -n "$AAB_FILE" && test -f "$AAB_FILE"
+          cp "$APK_FILE" app-release.apk
+          cp "$AAB_FILE" app-release.aab
+          ls -lh app-release.apk app-release.aab
 
       - name: Upload Release APK
         uses: actions/upload-artifact@v4
         with:
           name: app-release-apk
-          path: android/app/build/outputs/apk/release/*.apk
+          path: app-release.apk
+          if-no-files-found: error
           retention-days: 30
 
       - name: Upload Google Play AAB
         uses: actions/upload-artifact@v4
         with:
           name: app-release-aab
-          path: android/app/build/outputs/bundle/release/*.aab
+          path: app-release.aab
+          if-no-files-found: error
           retention-days: 30
