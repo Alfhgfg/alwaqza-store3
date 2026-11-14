@@ -160,7 +160,7 @@ export async function exportOrdersToGoogleSheets(
 
   const rows: (string | number)[][] = orders.map((o) => {
     const itemsSummary = o.items
-      .map((it) => `${it.product?.title || it.product?.name || 'منتج'} (كمية: ${it.quantity})`)
+      .map((it) => `${it.name || 'منتج'} (كمية: ${it.quantity})`)
       .join(' | ');
 
     return [
@@ -268,7 +268,7 @@ export async function exportProductsToGoogleSheets(
     categoriesMap[p.category] || p.category,
     p.price,
     p.originalPrice || '',
-    p.stock,
+    p.stock ?? 0,
     p.isFeatured ? 'نعم' : 'لا',
     p.image,
   ]);

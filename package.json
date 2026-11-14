@@ -5,8 +5,10 @@
   "type": "module",
   "scripts": {
     "dev": "tsx server.ts",
+    "start": "tsx server.ts",
     "build": "vite build",
     "preview": "vite preview",
+    "lint": "tsc --noEmit",
     "android:sync": "npm run build && npx cap sync android",
     "android:build": "bash ./scripts/build-apk.sh"
   },
@@ -19,6 +21,7 @@
     "@capacitor/preferences": "^7.0.0",
     "@capacitor/splash-screen": "^7.0.0",
     "@capacitor/status-bar": "^7.0.0",
+    "@tailwindcss/vite": "^4.3.5",
     "bcryptjs": "^2.4.3",
     "canvas-confetti": "^1.9.4",
     "clsx": "^2.1.1",

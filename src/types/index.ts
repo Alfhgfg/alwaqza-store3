@@ -2,7 +2,7 @@ export type Currency = 'SAR' | 'YER' | 'USD';
 
 export interface Product {
   id: string;
-  name?: string;
+  name: string;
   title?: string;
   titleEn?: string;
   price: number;
@@ -48,12 +48,12 @@ export interface Order {
   id: string;
   orderNumber?: string;
   date?: string;
-  createdAt?: string;
+  createdAt: string;
   status: OrderStatus;
-  items: CartItem[];
+  items: OrderItem[];
   total?: number;
-  totalAmount?: number;
-  shippingFee?: number;
+  totalAmount: number;
+  shippingFee: number;
   currency?: Currency;
   customerName: string;
   phone: string;
